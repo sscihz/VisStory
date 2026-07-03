@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from io import StringIO
+from io import BytesIO, StringIO
 from pathlib import Path
 
 import pandas as pd
@@ -14,12 +14,23 @@ SURENNBA_PLAYER_STATS_URL = (
     "https://raw.githubusercontent.com/suren-nba/surennba_stats/main/"
     "data/player_stats/2025-26NBA_RegularSeason_Player_stats.csv"
 )
+SURENNBA_TEAM_STATS_URL = (
+    "https://raw.githubusercontent.com/suren-nba/surennba_stats/main/"
+    "data/team_stats/2025-26NBA_RegularSeason_Team_stats.xlsx"
+)
+SURENNBA_OPPONENT_STATS_URL = (
+    "https://raw.githubusercontent.com/suren-nba/surennba_stats/main/"
+    "data/team_stats/2025-26NBA_RegularSeason_Opponent_stats.xlsx"
+)
 
 DATA_DIR = Path("data")
 RAW_DIR = DATA_DIR / "raw"
 PROCESSED_DIR = DATA_DIR / "processed"
 PLAYER_CACHE = RAW_DIR / "surennba_player_stats.csv"
+TEAM_CACHE = RAW_DIR / "surennba_team_stats.xlsx"
+OPPONENT_CACHE = RAW_DIR / "surennba_opponent_stats.xlsx"
 PROCESSED_PLAYER_CACHE = PROCESSED_DIR / "player_rates.csv"
+PROCESSED_TEAM_CACHE = PROCESSED_DIR / "team_rates.csv"
 
 REQUIRED_PLAYER_COLUMNS = {
     "name",
@@ -41,6 +52,43 @@ REQUIRED_PLAYER_COLUMNS = {
     "efgpct",
     "tspct",
     "usage",
+}
+
+OPTIONAL_PLAYER_NUMERIC_COLUMNS = {
+    "offfgreboundpct",
+    "deffgreboundpct",
+    "offrebounds",
+    "defrebounds",
+    "fg3apct",
+    "corner3frequency",
+    "arc3frequency",
+    "corner3accuracy",
+    "arc3accuracy",
+    "shotqualityavg",
+}
+
+REQUIRED_TEAM_COLUMNS = {
+    "name",
+    "teamabbreviation",
+    "gamesplayed",
+    "offposs",
+    "defposs",
+    "points",
+    "opponentpoints",
+    "fg2m",
+    "fg2a",
+    "fg3m",
+    "fg3a",
+    "ftpoints",
+    "fta",
+    "turnovers",
+    "offrebounds",
+    "defrebounds",
+    "pace",
+    "efgpct",
+    "tspct",
+    "fg3pct",
+    "fg3apct",
 }
 
 ROLE_OVERRIDES = {
@@ -118,6 +166,13 @@ def download_player_stats(url: str = SURENNBA_PLAYER_STATS_URL, timeout: int = 3
     return pd.concat([df, source], axis=1)
 
 
+def download_excel_table(url: str, timeout: int = 30) -> pd.DataFrame:
+    """Download a public Excel table from surennba_stats."""
+    response = requests.get(url, timeout=timeout)
+    response.raise_for_status()
+    return pd.read_excel(BytesIO(response.content)).copy()
+
+
 def load_player_stats(use_cache: bool = True, allow_fallback: bool = True) -> pd.DataFrame:
     """Load player stats from cache, remote source, or a small fallback sample."""
     RAW_DIR.mkdir(parents=True, exist_ok=True)
@@ -140,6 +195,13 @@ def validate_player_columns(df: pd.DataFrame) -> None:
     missing = sorted(REQUIRED_PLAYER_COLUMNS - set(df.columns))
     if missing:
         raise ValueError(f"player stats missing required columns: {missing}")
+
+
+def validate_team_columns(df: pd.DataFrame) -> None:
+    """Raise a clear error if a required team column is missing."""
+    missing = sorted(REQUIRED_TEAM_COLUMNS - set(df.columns))
+    if missing:
+        raise ValueError(f"team stats missing required columns: {missing}")
 
 
 def infer_position_group(row: pd.Series) -> str:
@@ -167,7 +229,7 @@ def prepare_player_dataset(min_minutes: int = 300, use_cache: bool = True) -> pd
     df.columns = df.columns.str.strip().str.lower()
     validate_player_columns(df)
 
-    numeric_cols = sorted(REQUIRED_PLAYER_COLUMNS - {"name", "teamabbreviation"})
+    numeric_cols = sorted((REQUIRED_PLAYER_COLUMNS | OPTIONAL_PLAYER_NUMERIC_COLUMNS) & set(df.columns) - {"name", "teamabbreviation"})
     for col in numeric_cols:
         df[col] = pd.to_numeric(df[col], errors="coerce")
 
@@ -181,8 +243,122 @@ def prepare_player_dataset(min_minutes: int = 300, use_cache: bool = True) -> pd
     return df
 
 
+def _fallback_team_stats() -> pd.DataFrame:
+    """Small team sample that keeps docs buildable without network."""
+    records = [
+        ["SAS", "SAS", 82, 8197, 8249, 9826, 9145, 2446, 4263, 1116, 3147, 1586, 2016, 1103, 1176, 3121, 100.0, 0.574, 0.591, 0.355, 0.425],
+        ["LAL", "LAL", 82, 8061, 8125, 9540, 9396, 2478, 4162, 970, 2751, 1674, 2194, 1188, 1002, 2773, 98.6, 0.569, 0.605, 0.353, 0.398],
+        ["MEM", "MEM", 82, 8271, 8337, 9896, 9403, 2464, 4296, 1151, 3199, 1515, 1954, 1272, 1305, 2984, 101.0, 0.559, 0.593, 0.360, 0.427],
+        ["IND", "IND", 82, 8287, 8356, 9874, 9219, 2637, 4630, 993, 2831, 1621, 2096, 1106, 1164, 3101, 101.1, 0.553, 0.589, 0.351, 0.379],
+        ["NYK", "NYK", 82, 7890, 7900, 9300, 9000, 2300, 4000, 1050, 2900, 1500, 1900, 980, 1200, 3000, 96.2, 0.560, 0.590, 0.362, 0.420],
+    ]
+    return pd.DataFrame(
+        records,
+        columns=[
+            "name",
+            "teamabbreviation",
+            "gamesplayed",
+            "offposs",
+            "defposs",
+            "points",
+            "opponentpoints",
+            "fg2m",
+            "fg2a",
+            "fg3m",
+            "fg3a",
+            "ftpoints",
+            "fta",
+            "turnovers",
+            "offrebounds",
+            "defrebounds",
+            "pace",
+            "efgpct",
+            "tspct",
+            "fg3pct",
+            "fg3apct",
+        ],
+    )
+
+
+def load_team_stats(use_cache: bool = True, allow_fallback: bool = True) -> pd.DataFrame:
+    """Load team and opponent stats from cache, remote source, or fallback."""
+    RAW_DIR.mkdir(parents=True, exist_ok=True)
+
+    if use_cache and TEAM_CACHE.exists() and OPPONENT_CACHE.exists():
+        team_df = pd.read_excel(TEAM_CACHE)
+        opponent_df = pd.read_excel(OPPONENT_CACHE)
+    else:
+        try:
+            team_df = download_excel_table(SURENNBA_TEAM_STATS_URL)
+            opponent_df = download_excel_table(SURENNBA_OPPONENT_STATS_URL)
+            team_df.to_excel(TEAM_CACHE, index=False)
+            opponent_df.to_excel(OPPONENT_CACHE, index=False)
+        except Exception:
+            if allow_fallback:
+                team_df = _fallback_team_stats()
+                opponent_df = team_df.rename(
+                    columns={
+                        "points": "opponentpoints",
+                        "opponentpoints": "points",
+                        "offposs": "defposs",
+                        "defposs": "offposs",
+                        "offrebounds": "defrebounds",
+                        "defrebounds": "offrebounds",
+                    }
+                )
+            else:
+                raise
+
+    team_df.columns = team_df.columns.str.strip().str.lower()
+    opponent_df.columns = opponent_df.columns.str.strip().str.lower()
+    team_df = pd.concat([team_df.copy(), pd.Series(["surennba_stats"] * len(team_df), name="source")], axis=1)
+    opponent_subset = opponent_df[["teamabbreviation", "defrebounds", "offrebounds"]].rename(
+        columns={
+            "defrebounds": "opponent_defrebounds",
+            "offrebounds": "opponent_offrebounds",
+        }
+    )
+    return team_df.merge(opponent_subset, on="teamabbreviation", how="left")
+
+
+def prepare_team_dataset(use_cache: bool = True) -> pd.DataFrame:
+    """Return a cleaned team table with real Four Factors and ratings."""
+    df = load_team_stats(use_cache=use_cache)
+    validate_team_columns(df)
+    numeric_cols = sorted(set(df.columns) - {"name", "shortname", "teamabbreviation", "source"})
+    for col in numeric_cols:
+        df[col] = pd.to_numeric(df[col], errors="coerce")
+    if "opponent_defrebounds" not in df.columns:
+        df["opponent_defrebounds"] = df["defrebounds"]
+    if "opponent_offrebounds" not in df.columns:
+        df["opponent_offrebounds"] = df["offrebounds"]
+
+    fga = df["fg2a"] + df["fg3a"]
+    fgm = df["fg2m"] + df["fg3m"]
+    derived = pd.DataFrame(
+        {
+            "fga": fga,
+            "fgm": fgm,
+            "off_rtg": df["points"] / df["offposs"] * 100,
+            "def_rtg": df["opponentpoints"] / df["defposs"] * 100,
+            "tov_pct_calc": df["turnovers"] / (fga + 0.44 * df["fta"] + df["turnovers"]),
+            "oreb_pct_calc": df["offrebounds"] / (df["offrebounds"] + df["opponent_defrebounds"]),
+            "ft_rate_calc": df["ftpoints"] / fga,
+            "efg_pct_calc": (fgm + 0.5 * df["fg3m"]) / fga,
+            "points_per_game": df["points"] / df["gamesplayed"],
+            "poss_per_game": df["offposs"] / df["gamesplayed"],
+        }
+    )
+    derived["net_rtg"] = derived["off_rtg"] - df["opponentpoints"] / df["defposs"] * 100
+    df = pd.concat([df, derived], axis=1)
+
+    PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
+    df.to_csv(PROCESSED_TEAM_CACHE, index=False)
+    return df
+
+
 def illustrative_team_four_factors() -> pd.DataFrame:
-    """Small teaching dataset for Four Factors examples."""
+    """Backward-compatible alias for older notebooks/tests."""
     return pd.DataFrame(
         [
             ["高效投篮队", 0.580, 0.125, 0.245, 0.205, 118.0],
