@@ -43,18 +43,84 @@ def _label_extremes(ax: plt.Axes, df: pd.DataFrame, x_col: str, y_col: str, labe
         ax.text(row[x_col], row[y_col], f" {row[label_col]}", fontsize=8, color=INK, va="center")
 
 
+def _example_row(df: pd.DataFrame, name: str = "Austin Reaves") -> pd.Series | None:
+    matches = df[df["name"].str.casefold() == name.casefold()] if "name" in df.columns else pd.DataFrame()
+    if matches.empty:
+        return None
+    return matches.iloc[0]
+
+
+def _density_curve(values: pd.Series, points: int = 240) -> tuple[np.ndarray, np.ndarray]:
+    clean = pd.to_numeric(values, errors="coerce").dropna().astype(float)
+    if clean.empty:
+        return np.array([]), np.array([])
+    if clean.nunique() == 1:
+        center = float(clean.iloc[0])
+        x = np.linspace(center - 1, center + 1, points)
+        y = np.exp(-0.5 * ((x - center) / 0.2) ** 2)
+        return x, y / y.max()
+    std = clean.std(ddof=1)
+    bandwidth = max(1.06 * std * (len(clean) ** (-1 / 5)), std * 0.15, 1e-6)
+    value_range = clean.max() - clean.min()
+    x = np.linspace(clean.min() - 0.15 * value_range, clean.max() + 0.15 * value_range, points)
+    diffs = (x[:, None] - clean.to_numpy()[None, :]) / bandwidth
+    y = np.exp(-0.5 * diffs**2).sum(axis=1) / (len(clean) * bandwidth * np.sqrt(2 * np.pi))
+    return x, y
+
+
+def _plot_density_with_marker(
+    ax: plt.Axes,
+    values: pd.Series,
+    *,
+    marker_value: float | None = None,
+    marker_label: str = "Austin Reaves",
+    reference_value: float | None = None,
+    reference_label: str | None = None,
+    color: str = BLUE,
+    title: str,
+    xlabel: str,
+    percent: bool = False,
+) -> None:
+    vals = pd.to_numeric(values, errors="coerce").dropna().astype(float)
+    if percent:
+        vals = vals * 100
+        marker_value = marker_value * 100 if marker_value is not None else None
+        reference_value = reference_value * 100 if reference_value is not None else None
+    x, y = _density_curve(vals)
+    ax.fill_between(x, y, color=color, alpha=0.28)
+    ax.plot(x, y, color=color, linewidth=2.0)
+    ax.axvline(vals.median(), color=INK, linestyle="--", linewidth=1.1)
+    ax.text(vals.median(), ax.get_ylim()[1] * 0.92, "中位数", color=INK, fontsize=8, ha="center")
+    if reference_value is not None:
+        ax.axvline(reference_value, color=MUTED, linestyle=":", linewidth=1.3)
+        if reference_label:
+            ax.text(reference_value, ax.get_ylim()[1] * 0.78, reference_label, color=MUTED, fontsize=8, ha="center")
+    if marker_value is not None:
+        ax.axvline(marker_value, color=RED, linewidth=2.0)
+        ax.scatter([marker_value], [ax.get_ylim()[1] * 0.08], s=58, color=RED, zorder=5)
+        ax.text(marker_value, ax.get_ylim()[1] * 0.15, marker_label, color=RED, fontsize=9, ha="center", weight="bold")
+    ax.set_title(title, loc="left", fontsize=13, weight="bold")
+    ax.set_xlabel(xlabel)
+    ax.set_yticks([])
+    _strip_axes(ax)
+
+
 def build_possessions_pace_chart(teams: pd.DataFrame, output_dir: Path) -> Path:
     configure_matplotlib()
     df = teams.dropna(subset=["pace", "off_rtg", "points_per_game"]).copy()
 
     fig, axes = plt.subplots(1, 2, figsize=(11, 4.8), gridspec_kw={"width_ratios": [1, 1.15]})
     ax = axes[0]
-    ax.hist(df["pace"], bins=9, color=ACCENT, alpha=0.86, edgecolor="white")
-    ax.axvline(df["pace"].median(), color=INK, linestyle="--", linewidth=1.2)
-    ax.set_title("真实球队节奏分布", loc="left", fontsize=13, weight="bold")
-    ax.set_xlabel("PACE：每 48 分钟回合数")
-    ax.set_ylabel("球队数量")
-    _strip_axes(ax)
+    marker = df.loc[df["teamabbreviation"].eq("LAL"), "pace"]
+    _plot_density_with_marker(
+        ax,
+        df["pace"],
+        marker_value=float(marker.iloc[0]) if not marker.empty else None,
+        marker_label="LAL",
+        color=ACCENT,
+        title="真实球队 PACE 密度：先定位球队在分布哪里",
+        xlabel="PACE：每 48 分钟回合数",
+    )
 
     ax = axes[1]
     scatter = ax.scatter(
@@ -89,18 +155,17 @@ def build_per36_three_point_chart(players: pd.DataFrame, output_dir: Path) -> Pa
 
     fig, axes = plt.subplots(1, 2, figsize=(11, 5.2), gridspec_kw={"width_ratios": [1, 1.25]})
     ax = axes[0]
-    data = [df.loc[df["position_group"] == pos, "fg3a_per36"] for pos in order]
-    parts = ax.violinplot(data, showmedians=True)
-    for idx, body in enumerate(parts["bodies"]):
-        body.set_facecolor(POSITION_COLORS.get(order[idx], MUTED))
-        body.set_alpha(0.58)
-        body.set_edgecolor("white")
-    parts["cmedians"].set_color(INK)
-    ax.axhline(8, color=RED, linestyle="--", linewidth=1.2)
-    ax.set_xticks(range(1, len(order) + 1), [{"Guard": "后卫", "Forward": "锋线", "Center": "中锋"}[pos] for pos in order])
-    ax.set_title("按位置看三分出手频率分布", loc="left", fontsize=13, weight="bold")
-    ax.set_ylabel("三分出手 / 36 分钟")
-    _strip_axes(ax)
+    example = _example_row(df)
+    _plot_density_with_marker(
+        ax,
+        df["fg3a_per36"],
+        marker_value=float(example["fg3a_per36"]) if example is not None else None,
+        reference_value=8,
+        reference_label="8 次线",
+        color=PURPLE,
+        title="球员三分出手/36 分钟密度",
+        xlabel="三分出手 / 36 分钟",
+    )
 
     ax = axes[1]
     top = df.sort_values("fg3a_per36", ascending=False).head(14).sort_values("fg3a_per36")
@@ -108,7 +173,7 @@ def build_per36_three_point_chart(players: pd.DataFrame, output_dir: Path) -> Pa
     ax.barh(top["player_label"], top["fg3a_per36"], color=colors)
     ax.axvline(8, color=RED, linestyle="--", linewidth=1.4)
     ax.text(8.1, len(top) - 0.8, "8 次/36 分钟", color=RED, fontsize=9)
-    ax.set_title("真实球员里谁接近或超过 8 次线", loc="left", fontsize=13, weight="bold")
+    ax.set_title("高产射手排行：Reaves 未到 8 次线", loc="left", fontsize=13, weight="bold")
     ax.set_xlabel("三分出手 / 36 分钟")
     ax.set_ylabel("")
     _strip_axes(ax)
@@ -120,27 +185,28 @@ def build_per36_three_point_chart(players: pd.DataFrame, output_dir: Path) -> Pa
 def build_four_factors_chart(teams: pd.DataFrame, output_dir: Path) -> Path:
     configure_matplotlib()
     df = teams.dropna(subset=["off_rtg", "efg_pct_calc", "tov_pct_calc", "oreb_pct_calc", "ft_rate_calc"]).copy()
-    df = df.sort_values("off_rtg", ascending=False).head(12)
-    metrics = ["efg_pct_calc", "tov_pct_calc", "oreb_pct_calc", "ft_rate_calc"]
-    labels = ["eFG%", "TOV% 越低越好", "ORB%", "FT/FGA"]
-    values = df[metrics].copy()
-    values["tov_pct_calc"] = 1 - values["tov_pct_calc"]
-    normalized = (values - values.min()) / (values.max() - values.min())
-
-    fig, ax = plt.subplots(figsize=(9.5, 6.2))
-    image = ax.imshow(normalized.to_numpy(), aspect="auto", cmap="YlOrBr", vmin=0, vmax=1)
-    ax.set_xticks(np.arange(len(labels)), labels=labels)
-    ax.set_yticks(np.arange(len(df)), labels=df["teamabbreviation"] + "  " + df["off_rtg"].round(1).astype(str))
-    ax.set_title("真实进攻效率前列球队的 Four Factors 画像", loc="left", fontsize=15, weight="bold")
-    for row in range(len(df)):
-        for col, metric in enumerate(metrics):
-            value = df.iloc[row][metric]
-            text = f"{value:.3f}"
-            ax.text(col, row, text, ha="center", va="center", fontsize=10, color=INK)
-    cbar = fig.colorbar(image, ax=ax, fraction=0.03, pad=0.02)
-    cbar.set_label("同列相对表现", color=MUTED)
-    ax.set_ylabel("球队  进攻效率")
-    add_source_note(fig, "数据：surennba_stats 球队统计；行内数字为真实指标值，颜色为同列相对表现。")
+    marker = df[df["teamabbreviation"].eq("LAL")]
+    marker = marker.iloc[0] if not marker.empty else None
+    fig, axes = plt.subplots(2, 2, figsize=(11, 7.2))
+    specs = [
+        ("efg_pct_calc", "eFG% 密度", "eFG%", BLUE, True),
+        ("tov_pct_calc", "TOV% 密度（越低越好）", "TOV%", RED, True),
+        ("oreb_pct_calc", "ORB% 密度", "ORB%", GREEN, True),
+        ("ft_rate_calc", "FT/FGA 密度", "FT/FGA", ACCENT, False),
+    ]
+    for ax, (col, title, xlabel, color, percent) in zip(axes.ravel(), specs):
+        _plot_density_with_marker(
+            ax,
+            df[col],
+            marker_value=float(marker[col]) if marker is not None else None,
+            marker_label="LAL",
+            color=color,
+            title=title,
+            xlabel=xlabel,
+            percent=percent,
+        )
+    fig.suptitle("Four Factors：每个因子都要先看联盟分布位置", x=0.01, ha="left", fontsize=16, weight="bold")
+    add_source_note(fig, "数据：surennba_stats 球队统计；红线示例为 Lakers。")
     return save_figure(fig, _figure_path(output_dir, "03-four-factors-heatmap.png"))
 
 
@@ -151,20 +217,17 @@ def build_usage_efficiency_chart(players: pd.DataFrame, output_dir: Path) -> Pat
 
     fig, axes = plt.subplots(1, 2, figsize=(11, 5.2), gridspec_kw={"width_ratios": [1, 1.25]})
     ax = axes[0]
-    order = _position_order(df)
-    data = [df.loc[df["position_group"] == pos, "usage"] for pos in order]
-    parts = ax.violinplot(data, showmedians=True)
-    for idx, body in enumerate(parts["bodies"]):
-        body.set_facecolor(POSITION_COLORS.get(order[idx], MUTED))
-        body.set_alpha(0.58)
-        body.set_edgecolor("white")
-    parts["cmedians"].set_color(INK)
-    ax.axhline(30, color=RED, linestyle="--", linewidth=1.2)
-    ax.text(0.65, 30.6, "30% 高使用率参考线", color=RED, fontsize=9)
-    ax.set_xticks(range(1, len(order) + 1), [{"Guard": "后卫", "Forward": "锋线", "Center": "中锋"}[pos] for pos in order])
-    ax.set_title("使用率在不同位置的分布", loc="left", fontsize=13, weight="bold")
-    ax.set_ylabel("Usage Rate")
-    _strip_axes(ax)
+    example = _example_row(df)
+    _plot_density_with_marker(
+        ax,
+        df["usage"],
+        marker_value=float(example["usage"]) if example is not None else None,
+        reference_value=30,
+        reference_label="30% 高使用",
+        color=BLUE,
+        title="球员使用率密度",
+        xlabel="Usage Rate",
+    )
 
     ax = axes[1]
     for position, group in df.groupby("position_group"):
@@ -200,18 +263,16 @@ def build_turnover_chart(players: pd.DataFrame, output_dir: Path) -> Path:
 
     fig, axes = plt.subplots(1, 2, figsize=(11, 5.2), gridspec_kw={"width_ratios": [1, 1.25]})
     ax = axes[0]
-    order = _position_order(df)
-    data = [df.loc[df["position_group"] == pos, "tov_pct_calc"] * 100 for pos in order]
-    parts = ax.violinplot(data, showmedians=True)
-    for idx, body in enumerate(parts["bodies"]):
-        body.set_facecolor(POSITION_COLORS.get(order[idx], MUTED))
-        body.set_alpha(0.58)
-        body.set_edgecolor("white")
-    parts["cmedians"].set_color(INK)
-    ax.set_xticks(range(1, len(order) + 1), [{"Guard": "后卫", "Forward": "锋线", "Center": "中锋"}[pos] for pos in order])
-    ax.set_title("不同位置的 TOV% 分布", loc="left", fontsize=13, weight="bold")
-    ax.set_ylabel("估算失误率 TOV%")
-    _strip_axes(ax)
+    example = _example_row(df)
+    _plot_density_with_marker(
+        ax,
+        df["tov_pct_calc"],
+        marker_value=float(example["tov_pct_calc"]) if example is not None else None,
+        color=RED,
+        title="球员 TOV% 密度",
+        xlabel="TOV%",
+        percent=True,
+    )
 
     ax = axes[1]
     for position, group in df.groupby("position_group"):
@@ -246,20 +307,15 @@ def build_rebound_rate_chart(players: pd.DataFrame, output_dir: Path) -> Path:
 
     fig, axes = plt.subplots(1, 2, figsize=(11, 5.2), gridspec_kw={"width_ratios": [1, 1.25]})
     ax = axes[0]
-    data = [df.loc[df["position_group"] == pos, "rebounds_per36"] for pos in order]
-    parts = ax.violinplot(data, showmeans=False, showmedians=True)
-    for idx, body in enumerate(parts["bodies"]):
-        body.set_facecolor(POSITION_COLORS[order[idx]])
-        body.set_alpha(0.55)
-        body.set_edgecolor("white")
-    parts["cmedians"].set_color(INK)
-    for idx, values in enumerate(data, start=1):
-        x = np.full(len(values), idx) + np.linspace(-0.05, 0.05, len(values))
-        ax.scatter(x, values, color=INK, s=18, alpha=0.55)
-    ax.set_xticks(range(1, len(order) + 1), [{"Guard": "后卫", "Forward": "锋线", "Center": "中锋"}[pos] for pos in order])
-    ax.set_title("每 36 分钟篮板：先消除上场时间", loc="left", fontsize=13, weight="bold")
-    ax.set_ylabel("篮板 / 36 分钟")
-    _strip_axes(ax)
+    example = _example_row(df)
+    _plot_density_with_marker(
+        ax,
+        df["rebounds_per36"],
+        marker_value=float(example["rebounds_per36"]) if example is not None else None,
+        color=GREEN,
+        title="球员篮板/36 分钟密度",
+        xlabel="篮板 / 36 分钟",
+    )
 
     ax = axes[1]
     if {"offfgreboundpct", "deffgreboundpct"}.issubset(df.columns):
@@ -311,18 +367,16 @@ def build_shooting_efficiency_chart(players: pd.DataFrame, output_dir: Path) -> 
     _strip_axes(ax)
 
     ax = axes[1]
-    order = _position_order(df)
-    data = [df.loc[df["position_group"] == pos, "ts_pct_calc"] * 100 for pos in order]
-    parts = ax.violinplot(data, showmedians=True)
-    for idx, body in enumerate(parts["bodies"]):
-        body.set_facecolor(POSITION_COLORS.get(order[idx], MUTED))
-        body.set_alpha(0.58)
-        body.set_edgecolor("white")
-    parts["cmedians"].set_color(INK)
-    ax.set_xticks(range(1, len(order) + 1), [{"Guard": "后卫", "Forward": "锋线", "Center": "中锋"}[pos] for pos in order])
-    ax.set_title("TS% 分布：效率不是只看三分准度", loc="left", fontsize=13, weight="bold")
-    ax.set_ylabel("TS%")
-    _strip_axes(ax)
+    example = _example_row(df)
+    _plot_density_with_marker(
+        ax,
+        df["ts_pct_calc"],
+        marker_value=float(example["ts_pct_calc"]) if example is not None else None,
+        color=ACCENT,
+        title="球员 TS% 密度",
+        xlabel="TS%",
+        percent=True,
+    )
     fig.suptitle("投篮效率：FG%、eFG%、TS%各自修正了什么？", x=0.01, ha="left", fontsize=16, weight="bold")
     add_source_note(fig, "数据：surennba_stats；过滤：500+ 分钟且 50+ 三分出手。")
     return save_figure(fig, _figure_path(output_dir, "07-shooting-efficiency.png"))
@@ -335,13 +389,17 @@ def build_three_point_volume_chart(players: pd.DataFrame, output_dir: Path) -> P
 
     fig, axes = plt.subplots(1, 2, figsize=(11, 5.2), gridspec_kw={"width_ratios": [1, 1.25]})
     ax = axes[0]
-    ax.hist(df["fg3a_per36"], bins=18, color=PURPLE, alpha=0.82, edgecolor="white")
-    ax.axvline(8, color=RED, linestyle="--", linewidth=1.3)
-    ax.axvline(df["fg3a_per36"].median(), color=INK, linestyle="--", linewidth=1.1)
-    ax.set_title("真实球员三分产量分布", loc="left", fontsize=13, weight="bold")
-    ax.set_xlabel("三分出手 / 36 分钟")
-    ax.set_ylabel("球员数量")
-    _strip_axes(ax)
+    example = _example_row(df)
+    _plot_density_with_marker(
+        ax,
+        df["fg3a_per36"],
+        marker_value=float(example["fg3a_per36"]) if example is not None else None,
+        reference_value=8,
+        reference_label="8 次线",
+        color=PURPLE,
+        title="三分产量密度",
+        xlabel="三分出手 / 36 分钟",
+    )
 
     ax = axes[1]
     for position, group in df.groupby("position_group"):
@@ -389,6 +447,18 @@ def build_role_map_chart(players: pd.DataFrame, output_dir: Path) -> Path:
     ax.axhline(8, color=RED, linestyle="--", linewidth=1.3)
     for _, row in df.sort_values("fg3a_per36", ascending=False).head(4).iterrows():
         ax.text(row["usage"] + 0.15, row["fg3a_per36"] + 0.1, row["name"], fontsize=8, color=INK)
+    example = _example_row(df)
+    if example is not None:
+        ax.scatter(
+            [example["usage"]],
+            [example["fg3a_per36"]],
+            s=170,
+            facecolor="none",
+            edgecolor=RED,
+            linewidth=2.2,
+            zorder=6,
+        )
+        ax.text(example["usage"] + 0.25, example["fg3a_per36"] + 0.15, "Austin Reaves", color=RED, fontsize=9, weight="bold")
     cbar = fig.colorbar(scatter, ax=ax, fraction=0.035, pad=0.02)
     cbar.set_label("TS%", color=MUTED)
     ax.set_title("读球员角色：谁负责消化回合，谁负责拉开空间？", loc="left", fontsize=15, weight="bold")

@@ -99,6 +99,7 @@ ROLE_OVERRIDES = {
     "Donte DiVincenzo": "Guard",
     "Desmond Bane": "Guard",
     "Tyrese Haliburton": "Guard",
+    "Austin Reaves": "Guard",
     "Kevin Durant": "Forward",
     "LeBron James": "Forward",
     "Jayson Tatum": "Forward",
@@ -130,6 +131,7 @@ def _fallback_player_stats() -> pd.DataFrame:
         ["Desmond Bane", "ORL", 2756, 82, 416, 776, 167, 429, 360, 1647, 338, 338, 240, 98, 164, 0.389, 0.553, 0.603, 23.0],
         ["Amen Thompson", "HOU", 2953, 79, 532, 928, 25, 116, 380, 1443, 420, 614, 379, 235, 190, 0.216, 0.545, 0.595, 20.0],
         ["Toumani Camara", "POR", 2731, 82, 173, 299, 219, 592, 125, 1100, 201, 421, 292, 129, 144, 0.370, 0.563, 0.577, 16.3],
+        ["Austin Reaves", "LAL", 1762, 73, 220, 390, 118, 328, 310, 1160, 340, 240, 190, 50, 150, 0.360, 0.567, 0.641, 26.3],
     ]
     columns = [
         "name",
