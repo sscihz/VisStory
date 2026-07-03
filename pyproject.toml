@@ -13,6 +13,7 @@ dependencies = [
   "mkdocs",
   "mkdocs-material",
   "numpy",
+  "openpyxl",
   "pandas",
   "pyarrow",
   "requests",
