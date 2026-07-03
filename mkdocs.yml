@@ -1,0 +1,38 @@
+site_name: 中文 NBA 基础数据思维教材
+site_description: 用数据思维理解回合、效率、使用率、失误率、篮板率与现代 NBA。
+site_url: ""
+repo_url: https://github.com/sscihz/VisStory
+theme:
+  name: material
+  language: zh
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+  palette:
+    - scheme: default
+      primary: black
+      accent: deep orange
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.details
+  - pymdownx.superfences
+extra_javascript:
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+nav:
+  - 首页: index.md
+  - 前言: 00-preface.md
+  - 01 回合与节奏: 01-possessions-and-pace.md
+  - 02 总量与归一化: 02-rates-vs-counting-stats.md
+  - 03 Four Factors: 03-four-factors.md
+  - 04 使用率: 04-usage-rate.md
+  - 05 失误率: 05-turnover-rate.md
+  - 06 篮板率: 06-rebound-rate.md
+  - 07 投篮效率: 07-shooting-efficiency.md
+  - 08 三分出手量: 08-three-point-volume.md
+  - 09 阅读球员角色: 09-reading-player-roles.md
+  - 公式附录: appendix-formulas.md

@@ -1,0 +1,31 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "nba-data-thinking-textbook"
+version = "0.1.0"
+description = "中文 NBA 基础数据思维教材与可复现图表代码"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "matplotlib",
+  "mkdocs",
+  "mkdocs-material",
+  "numpy",
+  "pandas",
+  "pyarrow",
+  "requests",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/nba_textbook"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
