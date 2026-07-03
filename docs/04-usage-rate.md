@@ -8,7 +8,7 @@
 
 所以使用率不是控球时间指标，而是 **回合终结指标**。
 
-![使用率与效率](assets/figures/04-usage-vs-efficiency.png)
+![使用率与效率](assets/figures/04-usage-vs-efficiency.svg)
 
 ## 直觉解释
 

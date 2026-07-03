@@ -22,7 +22,7 @@ $$
 
 这不是预测，也不是说替补真的能打 36 分钟。它只是把上场时间差异先拿掉。
 
-![每 36 分钟三分出手](assets/figures/02-per36-three-point-volume.png)
+![每 36 分钟三分出手](assets/figures/02-per36-three-point-volume.svg)
 
 ## 每 100 回合
 

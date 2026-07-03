@@ -11,7 +11,7 @@
 
 FG% 都是 50%，但进攻价值完全不同。
 
-![投篮效率指标](assets/figures/07-shooting-efficiency.png)
+![投篮效率指标](assets/figures/07-shooting-efficiency.svg)
 
 ## FG%
 

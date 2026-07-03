@@ -11,7 +11,7 @@
 
 一个 45% 三分命中率但每 36 分钟只出手 1 次的球员，和一个 38% 但每 36 分钟出手 9 次的球员，给防守带来的压力完全不同。
 
-![三分产量与效率](assets/figures/08-three-point-volume-efficiency.png)
+![三分产量与效率](assets/figures/08-three-point-volume-efficiency.svg)
 
 ## 为什么每 36 分钟三分出手重要
 

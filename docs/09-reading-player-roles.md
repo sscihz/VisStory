@@ -12,7 +12,7 @@
 - 失误率：他浪费机会的比例高不高？
 - 篮板率或 per36 篮板：他在位置职责中贡献多少回合回收？
 
-![球员角色地图](assets/figures/09-player-role-map.png)
+![球员角色地图](assets/figures/09-player-role-map.svg)
 
 ## 直觉解释
 

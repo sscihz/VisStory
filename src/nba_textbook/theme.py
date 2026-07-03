@@ -25,8 +25,20 @@ POSITION_COLORS = {
 }
 
 
+def _register_cjk_font_files() -> None:
+    """Register common Linux CJK font files before selecting font families."""
+    for font_path in [
+        Path("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"),
+        Path("/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc"),
+        Path("/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc"),
+    ]:
+        if font_path.exists():
+            font_manager.fontManager.addfont(str(font_path))
+
+
 def configure_matplotlib() -> None:
     """Apply a clean theme and use a Chinese-capable font when available."""
+    _register_cjk_font_files()
     available = {font.name for font in font_manager.fontManager.ttflist}
     preferred_fonts = [
         "Noto Sans CJK SC",
@@ -41,6 +53,7 @@ def configure_matplotlib() -> None:
     plt.rcParams.update(
         {
             "font.family": font_family,
+            "font.sans-serif": preferred_fonts,
             "axes.facecolor": BACKGROUND,
             "figure.facecolor": BACKGROUND,
             "axes.edgecolor": GRID,

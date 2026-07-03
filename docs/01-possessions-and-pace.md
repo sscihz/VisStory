@@ -11,7 +11,7 @@
 
 它们的进攻表现并不一样。前者每次机会更值钱，后者可能只是打得更快。
 
-![同样 110 分在不同节奏下的含义](assets/figures/01-possessions-pace.png)
+![同样 110 分在不同节奏下的含义](assets/figures/01-possessions-pace.svg)
 
 ## 直觉解释
 

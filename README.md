@@ -13,6 +13,12 @@
 
 ## 本地运行
 
+如果需要生成中文图表，建议系统安装 Noto CJK 字体：
+
+```bash
+sudo apt-get install fonts-noto-cjk
+```
+
 ```bash
 python -m pip install -e ".[dev]"
 python scripts/build_figures.py

@@ -15,7 +15,7 @@ Dean Oliver 提出的 Four Factors 试图回答一个基础问题：
 
 同一套逻辑也可以反过来看防守：让对手投不准、逼对手失误、保护后场篮板、少送对手罚球。
 
-![Four Factors 热力图](assets/figures/03-four-factors-heatmap.png)
+![Four Factors 热力图](assets/figures/03-four-factors-heatmap.svg)
 
 ## 四个指标
 

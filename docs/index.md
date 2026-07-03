@@ -24,7 +24,7 @@ python scripts/build_figures.py
 mkdocs serve
 ```
 
-所有公式函数在 [`src/nba_textbook/metrics.py`](../src/nba_textbook/metrics.py)，所有图表函数在 [`src/nba_textbook/charts.py`](../src/nba_textbook/charts.py)。
+所有公式函数在 `src/nba_textbook/metrics.py`，所有图表函数在 `src/nba_textbook/charts.py`。
 
 ## 参考脉络
 

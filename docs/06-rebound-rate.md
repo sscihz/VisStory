@@ -13,7 +13,7 @@
 
 > 在可抢篮板机会里，你抢到了多少？
 
-![篮板角色分布](assets/figures/06-rebound-role-distribution.png)
+![篮板角色分布](assets/figures/06-rebound-role-distribution.svg)
 
 ## 进攻篮板率
 

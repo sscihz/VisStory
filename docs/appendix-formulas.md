@@ -1,6 +1,6 @@
 # 公式附录
 
-本页集中整理教材中出现的基础公式。所有实现都位于 [`src/nba_textbook/metrics.py`](../src/nba_textbook/metrics.py)。
+本页集中整理教材中出现的基础公式。所有实现都位于 `src/nba_textbook/metrics.py`。
 
 ## 回合
 

@@ -11,7 +11,7 @@
 
 失误率想解决的就是这个比较问题。
 
-![失误数与失误率](assets/figures/05-turnover-rate.png)
+![失误数与失误率](assets/figures/05-turnover-rate.svg)
 
 ## 直觉解释
 

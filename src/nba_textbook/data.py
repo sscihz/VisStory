@@ -113,9 +113,9 @@ def download_player_stats(url: str = SURENNBA_PLAYER_STATS_URL, timeout: int = 3
     """Download the public surennba_stats player table."""
     response = requests.get(url, timeout=timeout)
     response.raise_for_status()
-    df = pd.read_csv(StringIO(response.text))
-    df["source"] = "surennba_stats"
-    return df
+    df = pd.read_csv(StringIO(response.text)).copy()
+    source = pd.Series(["surennba_stats"] * len(df), name="source")
+    return pd.concat([df, source], axis=1)
 
 
 def load_player_stats(use_cache: bool = True, allow_fallback: bool = True) -> pd.DataFrame:

@@ -58,7 +58,7 @@ def build_possessions_pace_chart(output_dir: Path) -> Path:
         )
     ax.legend(frameon=False, loc="upper right")
     add_source_note(fig, "示意图：用同样 110 分说明 possession-based thinking。")
-    return save_figure(fig, _figure_path(output_dir, "01-possessions-pace.png"))
+    return save_figure(fig, _figure_path(output_dir, "01-possessions-pace.svg"))
 
 
 def build_per36_three_point_chart(players: pd.DataFrame, output_dir: Path) -> Path:
@@ -75,7 +75,7 @@ def build_per36_three_point_chart(players: pd.DataFrame, output_dir: Path) -> Pa
     ax.set_xlabel("三分出手 / 36 分钟")
     ax.set_ylabel("")
     add_source_note(fig, "数据：surennba_stats 球员统计；若网络不可用则使用内置样例。")
-    return save_figure(fig, _figure_path(output_dir, "02-per36-three-point-volume.png"))
+    return save_figure(fig, _figure_path(output_dir, "02-per36-three-point-volume.svg"))
 
 
 def build_four_factors_chart(output_dir: Path) -> Path:
@@ -100,7 +100,7 @@ def build_four_factors_chart(output_dir: Path) -> Path:
     cbar = fig.colorbar(image, ax=ax, fraction=0.03, pad=0.02)
     cbar.set_label("同列相对表现", color=MUTED)
     add_source_note(fig, "示意数据；指标定义参考 Basketball-Reference Four Factors。")
-    return save_figure(fig, _figure_path(output_dir, "03-four-factors-heatmap.png"))
+    return save_figure(fig, _figure_path(output_dir, "03-four-factors-heatmap.svg"))
 
 
 def build_usage_efficiency_chart(players: pd.DataFrame, output_dir: Path) -> Path:
@@ -130,7 +130,7 @@ def build_usage_efficiency_chart(players: pd.DataFrame, output_dir: Path) -> Pat
     ax.set_ylabel("TS% / 真实命中率")
     ax.legend(frameon=False, title="位置组")
     add_source_note(fig, "数据：surennba_stats；点大小约代表上场时间。")
-    return save_figure(fig, _figure_path(output_dir, "04-usage-vs-efficiency.png"))
+    return save_figure(fig, _figure_path(output_dir, "04-usage-vs-efficiency.svg"))
 
 
 def build_turnover_chart(players: pd.DataFrame, output_dir: Path) -> Path:
@@ -155,7 +155,7 @@ def build_turnover_chart(players: pd.DataFrame, output_dir: Path) -> Path:
     ax.set_ylabel("估算失误率 TOV%")
     ax.legend(frameon=False, title="位置组")
     add_source_note(fig, "TOV% = TOV / (FGA + 0.44 * FTA + TOV)。")
-    return save_figure(fig, _figure_path(output_dir, "05-turnover-rate.png"))
+    return save_figure(fig, _figure_path(output_dir, "05-turnover-rate.svg"))
 
 
 def build_rebound_rate_chart(players: pd.DataFrame, output_dir: Path) -> Path:
@@ -179,7 +179,7 @@ def build_rebound_rate_chart(players: pd.DataFrame, output_dir: Path) -> Path:
     ax.set_title("篮板要看机会：先从每 36 分钟篮板理解位置职责", loc="left", fontsize=15, weight="bold")
     ax.set_ylabel("篮板 / 36 分钟")
     add_source_note(fig, "真实 ORB%/DRB% 需要对手篮板机会；本图先用 per36 展示角色差异。")
-    return save_figure(fig, _figure_path(output_dir, "06-rebound-role-distribution.png"))
+    return save_figure(fig, _figure_path(output_dir, "06-rebound-role-distribution.svg"))
 
 
 def build_shooting_efficiency_chart(players: pd.DataFrame, output_dir: Path) -> Path:
@@ -203,7 +203,7 @@ def build_shooting_efficiency_chart(players: pd.DataFrame, output_dir: Path) -> 
     ax.set_ylabel("命中率 / 效率（%）")
     ax.legend(frameon=False, ncol=3)
     add_source_note(fig, "3P% 只看三分；eFG% 修正三分价值；TS% 加入罚球。")
-    return save_figure(fig, _figure_path(output_dir, "07-shooting-efficiency.png"))
+    return save_figure(fig, _figure_path(output_dir, "07-shooting-efficiency.svg"))
 
 
 def build_three_point_volume_chart(players: pd.DataFrame, output_dir: Path) -> Path:
@@ -231,7 +231,7 @@ def build_three_point_volume_chart(players: pd.DataFrame, output_dir: Path) -> P
     ax.set_ylabel("三分命中率（%）")
     ax.legend(frameon=False, title="位置组")
     add_source_note(fig, "点大小约代表赛季三分总出手。")
-    return save_figure(fig, _figure_path(output_dir, "08-three-point-volume-efficiency.png"))
+    return save_figure(fig, _figure_path(output_dir, "08-three-point-volume-efficiency.svg"))
 
 
 def build_role_map_chart(players: pd.DataFrame, output_dir: Path) -> Path:
@@ -260,7 +260,7 @@ def build_role_map_chart(players: pd.DataFrame, output_dir: Path) -> Path:
     ax.set_xlabel("Usage Rate / 使用率")
     ax.set_ylabel("三分出手 / 36 分钟")
     add_source_note(fig, "横轴读球权终结，纵轴读空间参与，颜色读效率。")
-    return save_figure(fig, _figure_path(output_dir, "09-player-role-map.png"))
+    return save_figure(fig, _figure_path(output_dir, "09-player-role-map.svg"))
 
 
 def build_all_figures(players: pd.DataFrame, output_dir: Path) -> list[Path]:
