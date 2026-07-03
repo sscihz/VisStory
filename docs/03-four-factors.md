@@ -19,6 +19,8 @@ Dean Oliver 提出的 Four Factors 试图回答一个基础问题：
 
 ## 这个数据怎么看？
 
+![Four Factors 密度图：Lakers 示例](assets/figures/03-four-factors-density-lakers.svg)
+
 这张图不再用示意队伍，而是用真实 30 队数据分别画出 Four Factors 的密度图。红线标出 Lakers，虚线是联盟中位数。这样读 Four Factors 会更直观：不要只看某队 eFG% 是 56% 或 TOV% 是 13%，而要看它在全联盟分布中偏左、居中还是偏右。
 
 读图时可以问四个问题：

@@ -16,6 +16,8 @@
 
 ## 这个数据怎么看？
 
+![角色阅读密度图：Austin Reaves 示例](assets/figures/09-role-density-austin-reaves.svg)
+
 左图用真实球员数据把三个问题放在一张图里：
 
 - 横轴：使用率，谁负责结束更多回合？

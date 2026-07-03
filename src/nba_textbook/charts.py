@@ -488,9 +488,217 @@ def build_role_map_chart(players: pd.DataFrame, output_dir: Path) -> Path:
     return save_figure(fig, _figure_path(output_dir, "09-player-role-map.png"))
 
 
+def build_pace_density_reference(teams: pd.DataFrame, output_dir: Path) -> Path:
+    configure_matplotlib()
+    df = teams.dropna(subset=["pace"]).copy()
+    marker = df.loc[df["teamabbreviation"].eq("LAL"), "pace"]
+    fig, ax = plt.subplots(figsize=(8.5, 4.4))
+    _plot_density_with_marker(
+        ax,
+        df["pace"],
+        marker_value=float(marker.iloc[0]) if not marker.empty else None,
+        marker_label="LAL",
+        color=ACCENT,
+        title="PACE 密度图：Lakers 在本赛季球队节奏分布中的位置",
+        xlabel="PACE：每 48 分钟回合数",
+    )
+    add_source_note(fig, "数据：surennba_stats 2025-26 Regular Season Team_stats 全量 30 队。")
+    return save_figure(fig, _figure_path(output_dir, "01-pace-density-lakers.png"))
+
+
+def build_fg3a_per36_density_reference(players: pd.DataFrame, output_dir: Path) -> Path:
+    configure_matplotlib()
+    df = players.dropna(subset=["fg3a_per36", "fg3pct"]).copy()
+    df = df[(df["minutes"] >= 500) & (df["fg3a"] >= 20)]
+    example = _example_row(df)
+    fig, ax = plt.subplots(figsize=(8.5, 4.4))
+    _plot_density_with_marker(
+        ax,
+        df["fg3a_per36"],
+        marker_value=float(example["fg3a_per36"]) if example is not None else None,
+        reference_value=8,
+        reference_label="8 次/36 分钟",
+        color=PURPLE,
+        title="三分出手/36 分钟密度图：Austin Reaves 的产量位置",
+        xlabel="三分出手 / 36 分钟",
+    )
+    add_source_note(fig, "数据：surennba_stats 2025-26 Regular Season Player_stats；展示 500+ 分钟且 20+ 三分出手球员。")
+    return save_figure(fig, _figure_path(output_dir, "02-fg3a-per36-density-austin-reaves.png"))
+
+
+def build_four_factors_density_reference(teams: pd.DataFrame, output_dir: Path) -> Path:
+    configure_matplotlib()
+    df = teams.dropna(subset=["efg_pct_calc", "tov_pct_calc", "oreb_pct_calc", "ft_rate_calc"]).copy()
+    marker = df[df["teamabbreviation"].eq("LAL")]
+    marker = marker.iloc[0] if not marker.empty else None
+    fig, axes = plt.subplots(2, 2, figsize=(9.5, 6.8))
+    specs = [
+        ("efg_pct_calc", "eFG%", "eFG%", BLUE, True),
+        ("tov_pct_calc", "TOV%（越低越好）", "TOV%", RED, True),
+        ("oreb_pct_calc", "ORB%", "ORB%", GREEN, True),
+        ("ft_rate_calc", "FT/FGA", "FT/FGA", ACCENT, False),
+    ]
+    for ax, (col, title, xlabel, color, percent) in zip(axes.ravel(), specs):
+        _plot_density_with_marker(
+            ax,
+            df[col],
+            marker_value=float(marker[col]) if marker is not None else None,
+            marker_label="LAL",
+            color=color,
+            title=title,
+            xlabel=xlabel,
+            percent=percent,
+        )
+    fig.suptitle("Four Factors 密度图：Lakers 每个因子在联盟分布中的位置", x=0.01, ha="left", fontsize=16, weight="bold")
+    add_source_note(fig, "数据：surennba_stats 2025-26 Regular Season Team_stats 全量 30 队。")
+    return save_figure(fig, _figure_path(output_dir, "03-four-factors-density-lakers.png"))
+
+
+def build_usage_density_reference(players: pd.DataFrame, output_dir: Path) -> Path:
+    configure_matplotlib()
+    df = players.dropna(subset=["usage"]).copy()
+    df = df[df["minutes"] >= 500]
+    example = _example_row(df)
+    fig, ax = plt.subplots(figsize=(8.5, 4.4))
+    _plot_density_with_marker(
+        ax,
+        df["usage"],
+        marker_value=float(example["usage"]) if example is not None else None,
+        reference_value=30,
+        reference_label="30% 高使用",
+        color=BLUE,
+        title="使用率密度图：Austin Reaves 的回合终结负担",
+        xlabel="Usage Rate",
+    )
+    add_source_note(fig, "数据：surennba_stats 2025-26 Regular Season Player_stats；展示 500+ 分钟球员。")
+    return save_figure(fig, _figure_path(output_dir, "04-usage-density-austin-reaves.png"))
+
+
+def build_turnover_density_reference(players: pd.DataFrame, output_dir: Path) -> Path:
+    configure_matplotlib()
+    df = players.dropna(subset=["tov_pct_calc"]).copy()
+    df = df[df["minutes"] >= 500]
+    example = _example_row(df)
+    fig, ax = plt.subplots(figsize=(8.5, 4.4))
+    _plot_density_with_marker(
+        ax,
+        df["tov_pct_calc"],
+        marker_value=float(example["tov_pct_calc"]) if example is not None else None,
+        color=RED,
+        title="TOV% 密度图：Austin Reaves 的失误成本位置",
+        xlabel="TOV%",
+        percent=True,
+    )
+    add_source_note(fig, "数据：surennba_stats 2025-26 Regular Season Player_stats；展示 500+ 分钟球员。")
+    return save_figure(fig, _figure_path(output_dir, "05-turnover-density-austin-reaves.png"))
+
+
+def build_rebound_density_reference(players: pd.DataFrame, output_dir: Path) -> Path:
+    configure_matplotlib()
+    df = players.dropna(subset=["rebounds_per36"]).copy()
+    df = df[df["minutes"] >= 500]
+    example = _example_row(df)
+    fig, ax = plt.subplots(figsize=(8.5, 4.4))
+    _plot_density_with_marker(
+        ax,
+        df["rebounds_per36"],
+        marker_value=float(example["rebounds_per36"]) if example is not None else None,
+        color=GREEN,
+        title="篮板/36 分钟密度图：Austin Reaves 的篮板位置",
+        xlabel="篮板 / 36 分钟",
+    )
+    add_source_note(fig, "数据：surennba_stats 2025-26 Regular Season Player_stats；展示 500+ 分钟球员。")
+    return save_figure(fig, _figure_path(output_dir, "06-rebounds-density-austin-reaves.png"))
+
+
+def build_ts_density_reference(players: pd.DataFrame, output_dir: Path) -> Path:
+    configure_matplotlib()
+    df = players.dropna(subset=["ts_pct_calc"]).copy()
+    df = df[(df["minutes"] >= 500) & (df["fg3a"] >= 50)]
+    example = _example_row(df)
+    fig, ax = plt.subplots(figsize=(8.5, 4.4))
+    _plot_density_with_marker(
+        ax,
+        df["ts_pct_calc"],
+        marker_value=float(example["ts_pct_calc"]) if example is not None else None,
+        color=ACCENT,
+        title="TS% 密度图：Austin Reaves 的整体终结效率",
+        xlabel="TS%",
+        percent=True,
+    )
+    add_source_note(fig, "数据：surennba_stats 2025-26 Regular Season Player_stats；展示 500+ 分钟且 50+ 三分出手球员。")
+    return save_figure(fig, _figure_path(output_dir, "07-ts-density-austin-reaves.png"))
+
+
+def build_three_point_density_reference(players: pd.DataFrame, output_dir: Path) -> Path:
+    configure_matplotlib()
+    df = players.dropna(subset=["fg3a_per36", "fg3pct"]).copy()
+    df = df[(df["minutes"] >= 500) & (df["fg3a"] >= 50)]
+    example = _example_row(df)
+    fig, ax = plt.subplots(figsize=(8.5, 4.4))
+    _plot_density_with_marker(
+        ax,
+        df["fg3a_per36"],
+        marker_value=float(example["fg3a_per36"]) if example is not None else None,
+        reference_value=8,
+        reference_label="8 次/36 分钟",
+        color=PURPLE,
+        title="三分产量密度图：Austin Reaves 是否是高产射手？",
+        xlabel="三分出手 / 36 分钟",
+    )
+    add_source_note(fig, "数据：surennba_stats 2025-26 Regular Season Player_stats；展示 500+ 分钟且 50+ 三分出手球员。")
+    return save_figure(fig, _figure_path(output_dir, "08-three-point-density-austin-reaves.png"))
+
+
+def build_role_density_reference(players: pd.DataFrame, output_dir: Path) -> Path:
+    configure_matplotlib()
+    df = players.dropna(subset=["usage", "fg3a_per36"]).copy()
+    df = df[df["minutes"] >= 500]
+    example = _example_row(df)
+    fig, axes = plt.subplots(1, 2, figsize=(10.5, 4.4))
+    _plot_density_with_marker(
+        axes[0],
+        df["usage"],
+        marker_value=float(example["usage"]) if example is not None else None,
+        reference_value=30,
+        reference_label="30% 高使用",
+        color=BLUE,
+        title="使用率密度",
+        xlabel="Usage Rate",
+    )
+    _plot_density_with_marker(
+        axes[1],
+        df["fg3a_per36"],
+        marker_value=float(example["fg3a_per36"]) if example is not None else None,
+        reference_value=8,
+        reference_label="8 次线",
+        color=PURPLE,
+        title="三分产量密度",
+        xlabel="三分出手 / 36 分钟",
+    )
+    fig.suptitle("角色阅读密度图：Austin Reaves 同时处在较高使用率和中高三分产量区间", x=0.01, ha="left", fontsize=15, weight="bold")
+    add_source_note(fig, "数据：surennba_stats 2025-26 Regular Season Player_stats；展示 500+ 分钟球员。")
+    return save_figure(fig, _figure_path(output_dir, "09-role-density-austin-reaves.png"))
+
+
+def build_density_reference_figures(players: pd.DataFrame, teams: pd.DataFrame, output_dir: Path) -> list[Path]:
+    """Build standalone density figures used directly under reading sections."""
+    return [
+        build_pace_density_reference(teams, output_dir),
+        build_fg3a_per36_density_reference(players, output_dir),
+        build_four_factors_density_reference(teams, output_dir),
+        build_usage_density_reference(players, output_dir),
+        build_turnover_density_reference(players, output_dir),
+        build_rebound_density_reference(players, output_dir),
+        build_ts_density_reference(players, output_dir),
+        build_three_point_density_reference(players, output_dir),
+        build_role_density_reference(players, output_dir),
+    ]
+
+
 def build_all_figures(players: pd.DataFrame, teams: pd.DataFrame, output_dir: Path) -> list[Path]:
     """Build all static figures used by the textbook."""
-    return [
+    return build_density_reference_figures(players, teams, output_dir) + [
         build_possessions_pace_chart(teams, output_dir),
         build_per36_three_point_chart(players, output_dir),
         build_four_factors_chart(teams, output_dir),

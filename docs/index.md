@@ -7,7 +7,7 @@
 - 为什么 36 分钟出手 8 次三分已经是很强的空间参与？
 - 为什么使用率、失误率、篮板率比简单的出手数、失误数、篮板数更适合比较球员？
 
-教材中的图表由 Python 代码生成，每章都尽量使用真实 NBA 球员或球队数据来解释指标分布、位置差异和常见阈值。数据优先来自 [suren-nba/surennba_stats](https://github.com/suren-nba/surennba_stats)。如果网络不可用，代码会使用内置小样例，保证教材仍然可以构建。
+教材中的图表由 Python 代码生成，每章都尽量使用真实 NBA 球员或球队数据来解释指标分布、位置差异和常见阈值。数据优先来自 [suren-nba/surennba_stats](https://github.com/suren-nba/surennba_stats) 的 `2025-26NBA_RegularSeason_Player_stats` 和 `2025-26NBA_RegularSeason_Team_stats`。代码会读取本赛季常规赛全量表；为了避免垃圾时间或极小样本扭曲 per36/命中率，部分密度图会在图注中注明 500+ 分钟、50+ 三分出手等合格样本过滤。如果网络不可用，代码会使用内置小样例，保证教材仍然可以构建。
 
 ## 学习路线
 

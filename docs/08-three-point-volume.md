@@ -15,6 +15,8 @@
 
 ## 这个数据怎么看？
 
+![三分产量密度图：Austin Reaves 示例](assets/figures/08-three-point-density-austin-reaves.svg)
+
 左图是三分出手/36 分钟的真实密度图，红线是 Austin Reaves，灰线是 8 次/36 分钟参考线。右图把三分产量和命中率放在一起。样本过滤为至少 500 分钟、至少 50 次三分出手。
 
 在这份数据里，高产射手非常集中：三分出手频率最高的一批球员可以超过 **11-13 次/36 分钟**。例如图表生成时的前列包括 LaMelo Ball、Stephen Curry、Klay Thompson、Grayson Allen、Jordan Poole 等。注意，这里比较的是频率，不是说他们都承担同样难度或同样战术角色。
